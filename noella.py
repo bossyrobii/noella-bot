@@ -10,8 +10,8 @@ from flask import Flask
 from threading import Thread
 
 # ==========================================
-# FOR RENDER: Leave these as they are (we will use Environment Variables)
-# FOR LOCAL TESTING: Put your keys in the quotes
+# KEYS ARE PULLED FROM RENDER'S ENVIRONMENT
+# (For local testing, you can temporarily put them in the quotes)
 # ==========================================
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', 'PASTE_LOCAL_TOKEN_HERE')
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', 'PASTE_LOCAL_KEY_HERE')
@@ -41,7 +41,7 @@ def split_long_message(text, max_length=4000):
 def send_welcome(message):
     bot.reply_to(message, "Hello! I am Noella. I can chat, read images, read PDFs, and set timers!\n\nTry typing: /timer 10")
 
-# --- TIMER COMMAND (No sound version) ---
+# --- TIMER COMMAND (Cloud Version - Sends a Telegram Alert) ---
 @bot.message_handler(commands=['timer'])
 def set_timer(message):
     try:
@@ -51,12 +51,14 @@ def set_timer(message):
             return
         
         seconds = int(command_parts[1])
-        bot.reply_to(message, f"⏱️ Timer set for {seconds} seconds! I will message you when it's done.")
+        bot.reply_to(message, f"⏱️ Timer set for {seconds} seconds! I will alert you when it's done.")
         
         def timer_task():
             time.sleep(seconds) 
-            # Sound removed for cloud deployment
-            bot.send_message(message.chat.id, f"⏰ DING! Your {seconds}-second timer is done!")
+            
+            # Send an alert message to your phone
+            alert_text = f"🚨 **DING! DING! DING!** 🚨\n\nYour {seconds}-second timer is done!"
+            bot.send_message(message.chat.id, alert_text, parse_mode='Markdown')
             
         t = threading.Thread(target=timer_task)
         t.start()
