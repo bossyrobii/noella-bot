@@ -11,7 +11,6 @@ from threading import Thread
 
 # ==========================================
 # KEYS ARE PULLED FROM RENDER'S ENVIRONMENT
-# (For local testing, you can temporarily put them in the quotes)
 # ==========================================
 TELEGRAM_TOKEN = os.environ.get('TELEGRAM_TOKEN', 'PASTE_LOCAL_TOKEN_HERE')
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', 'PASTE_LOCAL_KEY_HERE')
@@ -39,9 +38,9 @@ def split_long_message(text, max_length=4000):
 # --- START COMMAND ---
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "Hello! I am Noella. I can chat, read images, read PDFs, and set timers!\n\nTry typing: /timer 10")
+    bot.reply_to(message, "Hello! I am Noella. I can chat, read images, read PDFs, and set timers!\n\nTry typing: /timer 5")
 
-# --- TIMER COMMAND (Cloud Version - Sends a Telegram Alert) ---
+# --- TIMER COMMAND (Cloud Version with Audio) ---
 @bot.message_handler(commands=['timer'])
 def set_timer(message):
     try:
@@ -56,9 +55,15 @@ def set_timer(message):
         def timer_task():
             time.sleep(seconds) 
             
-            # Send an alert message to your phone
-            alert_text = f"🚨 **DING! DING! DING!** 🚨\n\nYour {seconds}-second timer is done!"
-            bot.send_message(message.chat.id, alert_text, parse_mode='Markdown')
+            # 1. Send the text alert
+            bot.send_message(message.chat.id, f"⏰ **DING! DING! DING!** ⏰\n\nYour {seconds}-second timer is done!", parse_mode='Markdown')
+            
+            # 2. Send the actual audio file so your phone rings
+            try:
+                with open('alarm.mp3', 'rb') as audio:
+                    bot.send_audio(message.chat.id, audio)
+            except Exception as e:
+                print(f"Could not send audio: {e}") # Will show in Render logs if the file is missing
             
         t = threading.Thread(target=timer_task)
         t.start()
